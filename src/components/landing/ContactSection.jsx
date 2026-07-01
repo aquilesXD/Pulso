@@ -63,8 +63,8 @@ export default function ContactSection() {
 
             <div className="space-y-6">
               {[
-                { icon: Mail, label: "info@pulsoit.com", href: "mailto:info@pulsoit.com" },
-                { icon: Phone, label: "+58 412-0000000", href: "tel:+584120000000" },
+                { icon: Mail, label: "pusloit@pulsoit.com", href: "mailto:pusloit@pulsoit.com" },
+                { icon: Phone, label: "+584220075258", href: "tel:+584220075258" },
                 { icon: MapPin, label: c.location },
               ].map(({ icon: Icon, label, href }) => (
                 <div key={label} className="flex items-center gap-4">
