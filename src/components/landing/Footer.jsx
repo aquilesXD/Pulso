@@ -41,7 +41,7 @@ export default function Footer() {
           <div>
             <h4 className="text-white font-semibold text-sm mb-4">{f.navigation}</h4>
             <ul className="space-y-2">
-              {f.links.map((link) => (
+              {f.links.map((/** @type {{ href: string; label: string }} */ link) => (
                 <li key={link.href}>
                   <a href={link.href} className="text-white/40 hover:text-[#00E5FF] transition-colors text-sm">
                     {link.label}
@@ -54,7 +54,7 @@ export default function Footer() {
           <div>
             <h4 className="text-white font-semibold text-sm mb-4">{f.services}</h4>
             <ul className="space-y-2">
-              {f.serviceLinks.map((s) => (
+              {f.serviceLinks.map((/** @type {string} */ s) => (
                 <li key={s}>
                   <a href="#servicios" className="text-white/40 hover:text-[#00E5FF] transition-colors text-sm">{s}</a>
                 </li>
@@ -67,7 +67,7 @@ export default function Footer() {
             <ul className="space-y-3">
               <li className="flex items-center gap-3">
                 <Mail size={14} className="text-[#00E5FF] shrink-0" />
-                <a href="mailto:info@pulsoit.com" className="text-white/40 hover:text-[#00E5FF] transition-colors text-sm">info@pulsoit.com</a>
+                <a href="mailto:pusloit@pulsoit.com" className="text-white/40 hover:text-[#00E5FF] transition-colors text-sm">info@pulsoit.com</a>
               </li>
               <li className="flex items-center gap-3">
                 <Phone size={14} className="text-[#00E5FF] shrink-0" />
