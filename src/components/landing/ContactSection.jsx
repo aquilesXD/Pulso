@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Send, Mail, MapPin, Phone, Loader2 } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+// Use the local API endpoint instead of base44 for contact submissions
 import { useToast } from "@/components/ui/use-toast";
 import { useLang } from "@/lib/LanguageContext";
 
@@ -12,20 +12,29 @@ export default function ContactSection() {
   const [form, setForm] = useState({ name: "", email: "", phone: "", service: "", message: "" });
   const [sending, setSending] = useState(false);
 
+  /** @param {{ target: { name: string, value: any } }} e */
   const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
+  /** @param {import('react').FormEvent<HTMLFormElement>} e */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSending(true);
     try {
-      await base44.entities.ContactRequest.create({
-        name: form.name,
-        email: form.email,
-        phone: form.phone,
-        service: form.service,
-        message: form.message,
-        status: "new",
+      /* eslint-disable-next-line @typescript-eslint/ban-ts-comment */
+      /* @ts-ignore: import.meta.env may not be typed in JS files */
+      const apiBase = import.meta.env.VITE_API_BASE || (import.meta.env.DEV ? 'http://127.0.0.1:4000' : '');
+      const resp = await fetch(`${apiBase}/api/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          service: form.service,
+          message: form.message,
+        })
       });
+      if (!resp.ok) throw new Error('Failed to submit');
       toast({ title: c.successTitle, description: c.successDesc });
       setForm({ name: "", email: "", phone: "", service: "", message: "" });
     } catch {
@@ -107,7 +116,7 @@ export default function ContactSection() {
                   <select name="service" value={form.service} onChange={handleChange} required
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#00E5FF]/40 focus:outline-none focus:ring-1 focus:ring-[#00E5FF]/20 transition-colors text-sm appearance-none">
                     <option value="" className="bg-[#0A1628]">{c.servicePlaceholder}</option>
-                    {c.services.map((s) => (
+                    {c.services.map((/** @type {string} */ s) => (
                       <option key={s} value={s} className="bg-[#0A1628]">{s}</option>
                     ))}
                   </select>
