@@ -1,0 +1,50 @@
+{
+  "name": "ContactRequest",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Nombre"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "title": "Email"
+    },
+    "phone": {
+      "type": "string",
+      "title": "Tel\u00e9fono"
+    },
+    "service": {
+      "type": "string",
+      "title": "Servicio",
+      "enum": [
+        "Soporte T\u00e9cnico",
+        "Desarrollo Web",
+        "Automatizaciones",
+        "Reparaci\u00f3n y Diagn\u00f3stico",
+        "Otro"
+      ]
+    },
+    "message": {
+      "type": "string",
+      "title": "Mensaje"
+    },
+    "status": {
+      "type": "string",
+      "title": "Estado",
+      "enum": [
+        "new",
+        "contacted",
+        "resolved"
+      ],
+      "default": "new"
+    }
+  },
+  "required": [
+    "name",
+    "email",
+    "service",
+    "message"
+  ]
+}
