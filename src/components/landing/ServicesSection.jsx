@@ -4,186 +4,15 @@ import { Wrench, Globe, Bot, MonitorCog, ChevronDown, CheckCircle2, Shield, Head
 import { useLang } from "@/lib/LanguageContext";
 
 const services = [
-  {
-    icon: Wrench,
-    title: "Soporte Técnico",
-    subtitle: "Especializado y preventivo",
-    description:
-      "Garantizamos la continuidad operativa con soporte técnico de alto nivel para los sectores comercial e industrial.",
-    features: [
-      "Soporte técnico especializado y mantenimiento preventivo",
-      "Desarrollo de software a medida y APIs",
-      "Diseño de redes y consultoría tecnológica",
-    ],
-    image: "https://media.base44.com/images/public/6a3931edbedfeb772a963c37/09cecdc1b_10.png",
-  },
-  {
-    icon: Globe,
-    title: "Desarrollo Web",
-    subtitle: "Sitios profesionales",
-    description:
-      "Creamos sitios web responsivos, optimizados para SEO y velocidad, con integración de e-commerce y pasarelas de pago.",
-    features: [
-      "Diseño UI/UX personalizado",
-      "Desarrollo de sitio web responsivo",
-      "Integración de CMS (WordPress, etc.)",
-      "Optimización SEO y de velocidad",
-      "Integración de e-commerce y pasarelas de pago",
-      "Autenticación segura",
-      "Despliegue en la nube y mantenimiento",
-    ],
-    ideal: [
-      "Emprendedores y startups",
-      "Empresas que buscan presencia digital",
-      "Negocios e-commerce",
-    ],
-    image: "https://media.base44.com/images/public/6a3931edbedfeb772a963c37/396c82d96_4.png",
-  },
-  {
-    icon: Bot,
-    title: "Automatizaciones",
-    subtitle: "Optimiza tu negocio",
-    description:
-      "Implementamos flujos de trabajo automatizados con tecnologías líderes como N8N, Microsoft Power Platform y agentes de IA.",
-    features: [
-      "Flujos de trabajo automatizados (e-commerce, CRM)",
-      "Workflows de procesos empresariales end-to-end",
-      "Desarrollo robusto en N8N (soluciones Open-Source)",
-      "Microsoft Power Platform: PowerBI, PowerApps, PowerAutomate",
-      "Integraciones con Agentes de IA",
-    ],
-    ideal: [
-      "Dueños de negocios que buscan eficiencia",
-      "Gerentes de operaciones con cuellos de botella",
-      "Startups en crecimiento",
-    ],
-    image: "https://media.base44.com/images/public/6a3931edbedfeb772a963c37/fe5dfd68a_3.png",
-  },
-  {
-    icon: MonitorCog,
-    title: "Reparación y Diagnóstico",
-    subtitle: "Presencial",
-    description:
-      "Evaluación completa de equipos, limpieza de hardware, resolución de errores de software e instalación de programas.",
-    features: [
-      "Evaluación completa del equipo",
-      "Limpieza básica de hardware",
-      "Resolución de errores de software",
-      "Instalación de programas básicos",
-    ],
-    modal: "Presencial (en domicilio o empresa)",
-    ideal: [
-      "Usuarios con equipos lentos",
-      "Fallos recurrentes",
-      "Pantallas congeladas",
-      "Software que no inicia",
-    ],
-    image: "https://media.base44.com/images/public/6a3931edbedfeb772a963c37/fd15148c0_2.png",
-  },
-  {
-    icon: Shield,
-    title: "Mantenimiento Preventivo",
-    subtitle: "Presencial",
-    description:
-      "Limpieza y optimización profunda del sistema para extender la vida útil de tu equipo y mantenerlo libre de virus.",
-    features: [
-      "Limpieza profunda del sistema operativo",
-      "Eliminación de archivos basura y cachés",
-      "Actualización y optimización de antivirus",
-    ],
-    modal: "Presencial (en domicilio o empresa)",
-    ideal: [
-      "Para quienes desean extender la vida útil de su PC",
-      "Usuarios que notan lentitud y quieren recuperar velocidad",
-      "Personas que buscan un rendimiento óptimo y sin virus",
-    ],
-    image: "https://media.base44.com/images/public/6a3931edbedfeb772a963c37/4b01d63a0_7.png",
-  },
-  {
-    icon: Headphones,
-    title: "Plan de Soporte Remoto Mensual",
-    subtitle: "100% remoto",
-    description:
-      "Hasta 3 sesiones de soporte remoto al mes con resolución de problemas comunes, optimización y soporte multi-dispositivo.",
-    features: [
-      "Hasta 3 sesiones de soporte remoto al mes",
-      "Resolución de problemas comunes: lentitud, errores, actualizaciones",
-      "Optimización y mantenimiento del sistema",
-      "Soporte multi-dispositivo",
-    ],
-    modal: "Soporte 100% remoto (vía control remoto)",
-    ideal: [
-      "Negocios con 1 a 5 equipos",
-      "Empresas sin personal técnico interno",
-      "Usuarios que necesitan soporte rápido y flexible",
-      "Quienes buscan mantenimiento preventivo y correctivo de bajo costo",
-    ],
-    image: "https://media.base44.com/images/public/6a3931edbedfeb772a963c37/593329531_8.png",
-  },
-  {
-    icon: Lightbulb,
-    title: "Asesoría Tecnológica",
-    subtitle: "Presencial o remoto",
-    description:
-      "Recomendaciones personalizadas de compra, configuración avanzada de sistemas y asesoría sobre uso seguro de la tecnología.",
-    features: [
-      "Recomendaciones de compra personalizadas",
-      "Configuración avanzada de sistemas y dispositivos",
-      "Asesoría especializada sobre uso seguro de tecnología",
-    ],
-    modal: "Presencial o remoto (a elección)",
-    ideal: [
-      "Personas por adquirir nuevos equipos y quieren invertir bien",
-      "Usuarios que buscan mejorar y proteger su entorno digital",
-      "Emprendedores que necesitan optimizar sus herramientas",
-    ],
-    image: "https://media.base44.com/images/public/6a3931edbedfeb772a963c37/34268f578_5.jpg",
-  },
-  {
-    icon: Code,
-    title: "Desarrollo de API REST",
-    subtitle: "Personalizadas",
-    description:
-      "Diseño y arquitectura de APIs robustas con autenticación OAuth2/JWT, documentación Swagger y despliegue en la nube.",
-    features: [
-      "Diseño y arquitectura de API REST",
-      "Integración de bases de datos segura",
-      "Documentación interactiva (Swagger)",
-      "Pruebas de rendimiento y seguridad",
-      "Autenticación (OAuth2, JWT)",
-      "Despliegue en la nube",
-      "Escalabilidad y mantenimiento continuo",
-    ],
-    ideal: [
-      "Startups que necesitan un backend robusto",
-      "Empresas integrando múltiples sistemas",
-      "Desarrolladores que buscan un API de terceros",
-      "E-commerce y aplicaciones móviles",
-      "Negocios con necesidad de automatización",
-    ],
-    image: "https://media.base44.com/images/public/6a3931edbedfeb772a963c37/c9f6bc6cd_APIrest.png",
-  },
-  {
-    icon: Network,
-    title: "Configuración de Red Básica",
-    subtitle: "Presencial",
-    description:
-      "Instalación de router de alto rendimiento, conexión para todos los dispositivos, impresoras compartidas y red local optimizada.",
-    features: [
-      "Instalación de un router de alto rendimiento",
-      "Conexión para todos los dispositivos",
-      "Configuración de impresoras compartidas",
-      "Creación y optimización de una red local",
-    ],
-    modal: "Presencial (diseñado para empresas y hogares)",
-    ideal: [
-      "Hogares que necesitan cobertura Wi-Fi completa (sin zonas muertas)",
-      "Empresas que requieren un trabajo en red eficiente",
-      "Personas que buscan compartir archivos y equipos fácilmente",
-      "Usuarios que deseen una conexión a internet más rápida y estable",
-    ],
-    image: "https://media.base44.com/images/public/6a3931edbedfeb772a963c37/d890b1c80_6.png",
-  },
+  { id: "soporte", icon: Wrench, image: "https://media.base44.com/images/public/6a3931edbedfeb772a963c37/09cecdc1b_10.png" },
+  { id: "web", icon: Globe, image: "https://media.base44.com/images/public/6a3931edbedfeb772a963c37/396c82d96_4.png" },
+  { id: "automatizaciones", icon: Bot, image: "https://media.base44.com/images/public/6a3931edbedfeb772a963c37/fe5dfd68a_3.png" },
+  { id: "reparacion", icon: MonitorCog, image: "https://media.base44.com/images/public/6a3931edbedfeb772a963c37/fd15148c0_2.png" },
+  { id: "mantenimiento", icon: Shield, image: "https://media.base44.com/images/public/6a3931edbedfeb772a963c37/4b01d63a0_7.png" },
+  { id: "soporte-remoto", icon: Headphones, image: "https://media.base44.com/images/public/6a3931edbedfeb772a963c37/593329531_8.png" },
+  { id: "asesoria", icon: Lightbulb, image: "https://media.base44.com/images/public/6a3931edbedfeb772a963c37/34268f578_5.jpg" },
+  { id: "api-rest", icon: Code, image: "https://media.base44.com/images/public/6a3931edbedfeb772a963c37/c9f6bc6cd_APIrest.png" },
+  { id: "red", icon: Network, image: "https://media.base44.com/images/public/6a3931edbedfeb772a963c37/d890b1c80_6.png" },
 ];
 
 function ServiceCard({ service }) {
@@ -266,6 +95,10 @@ function ServiceCard({ service }) {
 
 export default function ServicesSection() {
   const { t } = useLang();
+  const merged = services.map((s) => {
+    const tr = t.services.items.find((i) => i.id === s.id);
+    return { ...s, ...tr };
+  });
   return (
     <section id="servicios" className="py-28 bg-gradient-dark relative">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -286,8 +119,8 @@ export default function ServicesSection() {
         </motion.div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {services.map((s) => (
-            <ServiceCard key={s.title} service={s} />
+          {merged.map((s) => (
+            <ServiceCard key={s.id} service={s} />
           ))}
         </div>
       </div>
