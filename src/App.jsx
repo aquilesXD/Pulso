@@ -6,8 +6,12 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { LanguageProvider } from '@/lib/LanguageContext';
 
-const rawBaseUrl = import.meta.env.BASE_URL;
-const routerBaseName = rawBaseUrl && rawBaseUrl !== './' ? rawBaseUrl : '/';
+// Determine router basename dynamically so the app works when served under a subpath
+let routerBaseName = '/';
+if (typeof window !== 'undefined') {
+  const parts = window.location.pathname.split('/').filter(Boolean);
+  if (parts.length > 0) routerBaseName = '/' + parts[0];
+}
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 // Add page imports here

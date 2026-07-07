@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
       setAuthError(null);
 
       if (!appParams.appId) {
-        console.warn('Base44 app ID not configured. Continuing without remote app-state checks.');
+        // Base44 app ID not configured: continue without remote checks (silenced)
         setAppPublicSettings(null);
         setIsAuthenticated(false);
         setIsLoadingAuth(false);

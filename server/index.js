@@ -2,12 +2,28 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import mysql from 'mysql2/promise';
+import path from 'path';
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Serve production build (dist) as static files and fallback to index.html for SPA routes
+const distPath = path.resolve(process.cwd(), 'dist');
+app.use(express.static(distPath));
+// Also serve the same static files under a possible subpath (e.g. /pulso)
+app.use('/pulso', express.static(distPath));
+// Redirect subpath requests to root so SPA router sees '/'
+app.get(/^\/pulso(\/.*)?$/, (req, res) => {
+  res.redirect('/');
+});
+// SPA fallback: serve index.html for non-API routes
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api')) return next();
+  res.sendFile(path.join(distPath, 'index.html'));
+});
 
 const port = process.env.PORT || 4000;
 
