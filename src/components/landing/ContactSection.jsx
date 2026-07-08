@@ -20,9 +20,7 @@ export default function ContactSection() {
     e.preventDefault();
     setSending(true);
     try {
-      /* eslint-disable-next-line @typescript-eslint/ban-ts-comment */
-      /* @ts-ignore: import.meta.env may not be typed in JS files */
-      const apiBase = import.meta.env.DEV ? 'http://127.0.0.1:4000' : 'https://pulsoinformation.com';
+      const apiBase = (import.meta.env.VITE_ADMIN_API_URL || 'http://localhost:4000/api').replace(/\/api\/?$/, '');
       const resp = await fetch(`${apiBase}/api/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
