@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import fs from 'fs';
 import mysql from 'mysql2/promise';
 import path from 'path';
 
@@ -12,16 +13,26 @@ app.use(express.json());
 
 // Serve production build (dist) as static files and fallback to index.html for SPA routes
 const distPath = path.resolve(process.cwd(), 'dist');
-app.use(express.static(distPath));
-// Also serve the same static files under a possible subpath (e.g. /pulso)
-app.use('/pulso', express.static(distPath));
-// Redirect subpath requests to root so SPA router sees '/'
-app.get(/^\/pulso(\/.*)?$/, (req, res) => {
-  res.redirect('/');
+const hasDist = fs.existsSync(distPath);
+if (hasDist) {
+  app.use(express.static(distPath));
+  app.use('/pulso/assets', express.static(path.join(distPath, 'assets')));
+  app.use('/pulso', express.static(distPath));
+} else {
+  console.warn('Warning: dist directory not found. Run npm run build before starting the server.');
+}
+
+// Redirect only the base /pulso route to root so SPA router sees '/'
+app.get(/^\/pulso\/?$/, (req, res) => {
+  return res.redirect('/');
 });
+
 // SPA fallback: serve index.html for non-API routes
 app.use((req, res, next) => {
   if (req.path.startsWith('/api')) return next();
+  if (!hasDist) {
+    return res.status(404).send('Build files not found. Run npm run build and restart the server.');
+  }
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
@@ -38,16 +49,23 @@ const dbConfig = {
 };
 
 let pool;
+let dbAvailable = false;
 async function initDb() {
   pool = mysql.createPool(dbConfig);
   await pool.query('SELECT 1');
+  dbAvailable = true;
 }
 
 initDb().catch((err) => {
   console.error('DB connection failed:', err);
+  dbAvailable = false;
 });
 
 app.post('/api/contact', async (req, res) => {
+  if (!dbAvailable) {
+    return res.status(503).json({ error: 'Database unavailable' });
+  }
+
   const { name, email, phone, service, message } = req.body || {};
   if (!name || !email || !service || !message) {
     return res.status(400).json({ error: 'Missing required fields' });

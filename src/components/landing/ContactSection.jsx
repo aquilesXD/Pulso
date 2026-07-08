@@ -22,7 +22,7 @@ export default function ContactSection() {
     try {
       /* eslint-disable-next-line @typescript-eslint/ban-ts-comment */
       /* @ts-ignore: import.meta.env may not be typed in JS files */
-      const apiBase = import.meta.env.VITE_API_BASE || (import.meta.env.DEV ? 'http://127.0.0.1:4000' : '');
+      const apiBase = import.meta.env.DEV ? 'http://127.0.0.1:4000' : 'https://pulsoinformation.com';
       const resp = await fetch(`${apiBase}/api/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -63,7 +63,7 @@ export default function ContactSection() {
 
             <div className="space-y-6">
               {[
-                { icon: Mail, label: "pusloit@pulsoit.com", href: "mailto:pusloit@pulsoit.com" },
+                { icon: Mail, label: "soporte.pulsomcbo@gmail.com", href: "mailto:soporte.pulsomcbo@gmail.com" },
                 { icon: Phone, label: "+584220075258", href: "tel:+584220075258" },
                 { icon: MapPin, label: c.location },
               ].map(({ icon: Icon, label, href }) => (

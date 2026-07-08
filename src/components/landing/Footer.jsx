@@ -67,7 +67,7 @@ export default function Footer() {
             <ul className="space-y-3">
               <li className="flex items-center gap-3">
                 <Mail size={14} className="text-[#00E5FF] shrink-0" />
-                <a href="mailto:pulsoit@gmail.com" className="text-white/40 hover:text-[#00E5FF] transition-colors text-sm">pulsoit@gmail.com</a>
+                <a href="mailto:soporte.pulsomcbo@gmail.com" className="text-white/40 hover:text-[#00E5FF] transition-colors text-sm">soporte.pulsomcbo@gmail.com</a>
               </li>
               <li className="flex items-center gap-3">
                 <Phone size={14} className="text-[#00E5FF] shrink-0" />
