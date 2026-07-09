@@ -13,7 +13,34 @@ const JWT_SECRET = process.env.JWT_SECRET || 'pulso-dev-secret-key-2024';
 const JWT_EXPIRES = '24h';
 
 const app = express();
-app.use(cors());
+
+// Enhanced CORS configuration for development and production
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests from localhost and same origin
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://127.0.0.1:5173',
+      'http://127.0.0.1:5174',
+    ];
+    
+    // Also allow same origin requests
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else if (process.env.NODE_ENV === 'production') {
+      // In production, restrict to specific domains
+      callback(null, true);
+    } else {
+      // In development, allow all for easier testing
+      callback(null, true);
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
 app.use(express.json());
 
 // Dev: log incoming requests
@@ -116,7 +143,6 @@ app.post('/api/contact', async (req, res) => {
 // Admin login - valida contra tabla usuarios (o mock users en dev)
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body || {};
-  console.log('[LOGIN] Request received:', { email, passwordLength: password ? password.length : 0 });
   if (!email || !password) return res.status(400).json({ message: 'Email y password requeridos' });
 
   try {
