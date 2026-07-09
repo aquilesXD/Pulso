@@ -33,9 +33,16 @@ export default function AboutSection() {
               <span className="text-gradient-cyan">{a.titleHighlight}</span>
             </h2>
             <p className="text-white/60 text-lg leading-relaxed mb-6">
-              {a.p1.replace("PULSO Information Technology, C.A.", "")}
-              <strong className="text-white">PULSO Information Technology, C.A.</strong>
-              {a.p1.split("PULSO Information Technology, C.A.")[1]}
+              {(() => {
+                const parts = a.p1.split("PULSO Information Technology, C.A.");
+                return (
+                  <>
+                    {parts[0]}
+                    <strong className="text-white">PULSO Information Technology, C.A.</strong>
+                    {parts[1]}
+                  </>
+                );
+              })()}
             </p>
             <p className="text-white/50 text-base leading-relaxed mb-8">{a.p2}</p>
 
