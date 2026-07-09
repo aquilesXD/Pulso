@@ -6,13 +6,71 @@ import mysql from 'mysql2/promise';
 import path from 'path';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import Joi from 'joi';
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
+import winston from 'winston';
 
 dotenv.config();
 
+// Require JWT_SECRET in production
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required in production');
+}
+
 const JWT_SECRET = process.env.JWT_SECRET || 'pulso-dev-secret-key-2024';
 const JWT_EXPIRES = '24h';
+const NODE_ENV = process.env.NODE_ENV || 'development';
+
+// Winston logger configuration
+const logger = winston.createLogger({
+  level: NODE_ENV === 'production' ? 'info' : 'debug',
+  format: winston.format.combine(
+    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+    winston.format.errors({ stack: true }),
+    winston.format.json()
+  ),
+  defaultMeta: { service: 'pulso-admin-api' },
+  transports: [
+    new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'logs/combined.log' }),
+    ...(NODE_ENV !== 'production' ? [new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple()
+      )
+    })] : [])
+  ]
+});
+
+// Create logs directory if it doesn't exist
+const logsDir = './logs';
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir, { recursive: true });
+}
 
 const app = express();
+
+// Security: Helmet middleware for setting HTTP headers
+app.use(helmet());
+
+// Rate limiting for login endpoint (prevent brute force)
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 attempts per windowMs
+  message: 'Too many login attempts, please try again later',
+  standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
+  legacyHeaders: false, // Disable `X-RateLimit-*` headers
+});
+
+// Generic rate limiter for contact form
+const contactLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10, // 10 requests per hour
+  message: 'Too many contact form submissions, please try again later',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Enhanced CORS configuration for development and production
 app.use(cors({
@@ -43,8 +101,22 @@ app.use(cors({
 
 app.use(express.json());
 
-// Dev: log incoming requests
-// (no request logging in production)
+// Request logging middleware
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    const logLevel = res.statusCode >= 400 ? 'warn' : 'info';
+    logger[logLevel](`${req.method} ${req.path}`, {
+      method: req.method,
+      path: req.path,
+      statusCode: res.statusCode,
+      duration: `${duration}ms`,
+      ip: req.ip
+    });
+  });
+  next();
+});
 
 // Serve production build (dist) as static files and fallback to index.html for SPA routes
 const distPath = path.resolve(process.cwd(), 'dist');
@@ -86,8 +158,8 @@ const dbConfig = {
 let pool;
 let dbAvailable = false;
 
-// Dev mode: in-memory mock users when DB is unavailable
-const mockUsers = {
+// Dev mode only: in-memory mock users when DB is unavailable
+const mockUsers = NODE_ENV === 'production' ? {} : {
   'admin@pulsoit.com': {
     id: 1,
     email: 'admin@pulsoit.com',
@@ -104,6 +176,48 @@ const mockUsers = {
   }
 };
 
+// Validation schemas
+const loginSchema = Joi.object({
+  email: Joi.string().email().required().messages({
+    'string.email': 'Email must be valid',
+    'any.required': 'Email is required'
+  }),
+  password: Joi.string().min(6).required().messages({
+    'string.min': 'Password must be at least 6 characters',
+    'any.required': 'Password is required'
+  })
+});
+
+const contactSchema = Joi.object({
+  nombre: Joi.string().max(150).required().messages({
+    'string.max': 'Name must be less than 150 characters',
+    'any.required': 'Name is required'
+  }),
+  email: Joi.string().email().required().messages({
+    'string.email': 'Email must be valid',
+    'any.required': 'Email is required'
+  }),
+  telefono: Joi.string().max(30).optional(),
+  servicio: Joi.string().required().messages({
+    'any.required': 'Service is required'
+  }),
+  mensaje: Joi.string().max(5000).required().messages({
+    'string.max': 'Message must be less than 5000 characters',
+    'any.required': 'Message is required'
+  })
+});
+
+// Validation middleware
+const validate = (schema) => (req, res, next) => {
+  const { error, value } = schema.validate(req.body, { abortEarly: false });
+  if (error) {
+    const messages = error.details.map(d => d.message);
+    return res.status(400).json({ message: 'Validation error', errors: messages });
+  }
+  req.body = value;
+  next();
+};
+
 async function initDb() {
   pool = mysql.createPool(dbConfig);
   await pool.query('SELECT 1');
@@ -111,10 +225,10 @@ async function initDb() {
 }
 
 initDb().catch((err) => {
-  console.error('DB connection failed:', err);
-  console.warn('Running in DEV mode with mock users. Available accounts:');
-  console.warn('  - admin@pulsoit.com / admin');
-  console.warn('  - admin@pulso.com / admin');
+  logger.error('DB connection failed', { error: err.message });
+  if (NODE_ENV === 'development') {
+    logger.warn('Running in DEV mode with mock users. Available accounts: admin@pulsoit.com / admin, admin@pulso.com / admin');
+  }
   dbAvailable = false;
 });
 
@@ -135,15 +249,14 @@ app.post('/api/contact', async (req, res) => {
     );
     res.json({ id: result.insertId });
   } catch (err) {
-    console.error('Insert failed:', err);
+    logger.error('Insert failed:', { error: err.message });
     res.status(500).json({ error: 'DB error' });
   }
 });
 
 // Admin login - valida contra tabla usuarios (o mock users en dev)
-app.post('/api/auth/login', async (req, res) => {
-  const { email, password } = req.body || {};
-  if (!email || !password) return res.status(400).json({ message: 'Email y password requeridos' });
+app.post('/api/auth/login', loginLimiter, validate(loginSchema), async (req, res) => {
+  const { email, password } = req.body;
 
   try {
     let user = null;
@@ -174,22 +287,17 @@ app.post('/api/auth/login', async (req, res) => {
 
     return res.json({ token, user: { email: user.email, role: user.role || 'admin', nombre: user.nombre || '' } });
   } catch (err) {
-    console.error('Login error:', err);
+    logger.error('Login error:', { error: err.message });
     return res.status(500).json({ message: 'Error del servidor' });
   }
 });
 
-// Dev: status endpoint
-app.get('/api/_status', (req, res) => {
-  const mode = dbAvailable ? 'production' : 'development';
-  const mockAccounts = !dbAvailable ? Object.keys(mockUsers).map(email => ({ email, password: 'admin' })) : [];
-  return res.json({ 
-    dbAvailable, 
-    mode,
-    mockAccounts,
-    adminEnv: { ADMIN_EMAIL: process.env.ADMIN_EMAIL || null } 
+// Health check endpoint (development only, minimal info)
+if (NODE_ENV === 'development') {
+  app.get('/api/health', (req, res) => {
+    return res.json({ status: 'ok', environment: NODE_ENV });
   });
-});
+}
 
 // Admin auth middleware - valida JWT
 function adminAuth(req, res, next) {
@@ -208,10 +316,9 @@ function adminAuth(req, res, next) {
 }
 
 // Public: create contacto from landing (usa nombres reales de columna)
-app.post('/api/contactos', async (req, res) => {
+app.post('/api/contactos', contactLimiter, validate(contactSchema), async (req, res) => {
   if (!dbAvailable) return res.status(503).json({ message: 'Database unavailable' });
-  const { nombre, email, telefono, servicio, mensaje } = req.body || {};
-  if (!nombre || !email || !servicio || !mensaje) return res.status(400).json({ message: 'Missing fields' });
+  const { nombre, email, telefono, servicio, mensaje } = req.body;
   try {
     const [result] = await pool.execute(
       `INSERT INTO contactos_formulario (nombre_completo, email, telefono, servicio_interes, mensaje, fecha_envio)
@@ -221,7 +328,7 @@ app.post('/api/contactos', async (req, res) => {
     const [rows] = await pool.execute('SELECT * FROM contactos_formulario WHERE id = ?', [result.insertId]);
     return res.json(rows[0]);
   } catch (err) {
-    console.error('Insert contactos failed:', err);
+    logger.error('Insert contactos failed:', { error: err.message });
     return res.status(500).json({ message: 'DB error' });
   }
 });
@@ -253,7 +360,7 @@ app.get('/api/contactos', adminAuth, async (req, res) => {
 
     return res.json({ data: rows, total, totalPages, page });
   } catch (err) {
-    console.error('List contactos failed:', err && err.message ? err.message : err);
+    logger.error('List contactos failed:', err && err.message ? err.message : err);
     return res.status(500).json({ message: err && err.message ? err.message : String(err) });
   }
 });
@@ -272,7 +379,7 @@ app.get('/api/contactos/stats', adminAuth, async (req, res) => {
     }
     return res.json(stats);
   } catch (err) {
-    console.error('Stats failed:', err && err.message ? err.message : err);
+    logger.error('Stats failed:', err && err.message ? err.message : err);
     return res.status(500).json({ message: err && err.message ? err.message : String(err) });
   }
 });
@@ -286,7 +393,7 @@ app.get('/api/contactos/:id', adminAuth, async (req, res) => {
     if (!rows[0]) return res.status(404).json({ message: 'Not found' });
     return res.json(rows[0]);
   } catch (err) {
-    console.error('Get contacto failed:', err && err.message ? err.message : err);
+    logger.error('Get contacto failed:', err && err.message ? err.message : err);
     return res.status(500).json({ message: err && err.message ? err.message : String(err) });
   }
 });
@@ -305,7 +412,7 @@ app.patch('/api/contactos/:id', adminAuth, async (req, res) => {
     if (!rows[0]) return res.status(404).json({ message: 'Not found' });
     return res.json(rows[0]);
   } catch (err) {
-    console.error('Update estado failed:', err && err.message ? err.message : err);
+    logger.error('Update estado failed:', err && err.message ? err.message : err);
     return res.status(500).json({ message: err && err.message ? err.message : String(err) });
   }
 });
@@ -318,7 +425,7 @@ app.delete('/api/contactos/:id', adminAuth, async (req, res) => {
     await pool.execute('DELETE FROM contactos_formulario WHERE id = ?', [id]);
     return res.status(204).send();
   } catch (err) {
-    console.error('Delete contacto failed:', err && err.message ? err.message : err);
+    logger.error('Delete contacto failed:', err && err.message ? err.message : err);
     return res.status(500).json({ message: err && err.message ? err.message : String(err) });
   }
 });
