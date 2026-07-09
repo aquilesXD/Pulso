@@ -58,6 +58,25 @@ const dbConfig = {
 
 let pool;
 let dbAvailable = false;
+
+// Dev mode: in-memory mock users when DB is unavailable
+const mockUsers = {
+  'admin@pulsoit.com': {
+    id: 1,
+    email: 'admin@pulsoit.com',
+    password_hash: bcrypt.hashSync('admin', 10),
+    role: 'admin',
+    nombre: 'Admin'
+  },
+  'admin@pulso.com': {
+    id: 2,
+    email: 'admin@pulso.com',
+    password_hash: 'admin',
+    role: 'admin',
+    nombre: 'Admin Pulso'
+  }
+};
+
 async function initDb() {
   pool = mysql.createPool(dbConfig);
   await pool.query('SELECT 1');
@@ -66,6 +85,9 @@ async function initDb() {
 
 initDb().catch((err) => {
   console.error('DB connection failed:', err);
+  console.warn('Running in DEV mode with mock users. Available accounts:');
+  console.warn('  - admin@pulsoit.com / admin');
+  console.warn('  - admin@pulso.com / admin');
   dbAvailable = false;
 });
 
@@ -91,23 +113,33 @@ app.post('/api/contact', async (req, res) => {
   }
 });
 
-// Admin login - valida contra tabla usuarios
+// Admin login - valida contra tabla usuarios (o mock users en dev)
 app.post('/api/auth/login', async (req, res) => {
-  if (!dbAvailable) return res.status(503).json({ message: 'Database unavailable' });
   const { email, password } = req.body || {};
+  console.log('[LOGIN] Request received:', { email, passwordLength: password ? password.length : 0 });
   if (!email || !password) return res.status(400).json({ message: 'Email y password requeridos' });
 
   try {
-    const [rows] = await pool.execute('SELECT * FROM usuarios WHERE email = ?', [email]);
-    if (rows.length === 0) return res.status(401).json({ message: 'Credenciales inválidas' });
+    let user = null;
 
-    const user = rows[0];
+    // Try database first if available
+    if (dbAvailable) {
+      const [rows] = await pool.execute('SELECT * FROM usuarios WHERE email = ?', [email]);
+      if (rows.length > 0) user = rows[0];
+    } else {
+      // Use mock users in dev mode
+      user = mockUsers[email] || null;
+    }
+
+    if (!user) return res.status(401).json({ message: 'Credenciales inválidas' });
+
     // Support both bcrypt hash and plain text passwords
     let valid = false;
-    if (user.password.startsWith('$2')) {
-      valid = await bcrypt.compare(password, user.password);
+    const passHash = user.password_hash || user.password;
+    if (passHash.startsWith('$2')) {
+      valid = await bcrypt.compare(password, passHash);
     } else {
-      valid = password === user.password;
+      valid = password === passHash;
     }
     if (!valid) return res.status(401).json({ message: 'Credenciales inválidas' });
 
@@ -123,7 +155,14 @@ app.post('/api/auth/login', async (req, res) => {
 
 // Dev: status endpoint
 app.get('/api/_status', (req, res) => {
-  return res.json({ dbAvailable, adminEnv: { ADMIN_EMAIL: process.env.ADMIN_EMAIL || null } });
+  const mode = dbAvailable ? 'production' : 'development';
+  const mockAccounts = !dbAvailable ? Object.keys(mockUsers).map(email => ({ email, password: 'admin' })) : [];
+  return res.json({ 
+    dbAvailable, 
+    mode,
+    mockAccounts,
+    adminEnv: { ADMIN_EMAIL: process.env.ADMIN_EMAIL || null } 
+  });
 });
 
 // Admin auth middleware - valida JWT

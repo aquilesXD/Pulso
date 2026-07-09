@@ -1,5 +1,6 @@
 // URL de tu servidor Node.js. Cámbiala por la URL de producción cuando despliegues.
 const API_BASE_URL = import.meta.env.VITE_ADMIN_API_URL || "http://localhost:4000/api";
+console.log("[adminApi] Using API_BASE_URL:", API_BASE_URL);
 
 const TOKEN_KEY = "pulso_admin_token";
 
