@@ -23,5 +23,13 @@ export default defineConfig({
   plugins: [
     base44Plugin,
     react(),
-  ].filter(Boolean)
+  ].filter(Boolean),
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+      },
+    },
+  },
 });

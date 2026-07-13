@@ -1,120 +1,134 @@
+// @ts-nocheck
 import React, { useState } from "react";
-import { X, Mail, Phone, Calendar, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2 } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 
-const estados = [
-  { key: "new", label: "Nueva" },
-  { key: "contacted", label: "Contactada" },
-  { key: "resolved", label: "Resuelta" },
+function formatDate(d) {
+  if (!d) return "—";
+  return new Date(d).toLocaleString("es-VE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+const estadoOptions = [
+  { value: "new", label: "Nueva" },
+  { value: "contacted", label: "Contactada" },
+  { value: "resolved", label: "Resuelta" },
 ];
 
 export default function ContactoDetail({ contacto, onClose, onUpdateEstado, onDelete }) {
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [selectedEstado, setSelectedEstado] = useState(contacto?.estado || "new");
+
+  if (!contacto) return null;
+
+  const handleEstadoChange = async (newEstado) => {
+    setUpdating(true);
+    try {
+      await onUpdateEstado(contacto.id, newEstado);
+      setSelectedEstado(newEstado);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm("¿Estás seguro de que deseas eliminar esta solicitud?")) return;
+    setUpdating(true);
+    try {
+      await onDelete(contacto.id);
+      onClose();
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="bg-[#0D1F3C] border border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-start justify-between p-6 border-b border-white/10">
-          <div>
-            <h2 className="font-heading font-bold text-xl text-white">{contacto.nombre}</h2>
-            <div className="mt-2">
-              <StatusBadge estado={contacto.estado} />
+    <Dialog open={!!contacto} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl bg-[#0F172A] border-white/10 text-white">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold">Detalle de Solicitud</DialogTitle>
+          <DialogDescription className="text-white/60">
+            Información completa del contacto
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm text-white/40 mb-1 block">Nombre</label>
+              <p className="text-white font-medium">{contacto.nombre}</p>
+            </div>
+            <div>
+              <label className="text-sm text-white/40 mb-1 block">Email</label>
+              <p className="text-white font-medium">{contacto.email}</p>
+            </div>
+            <div>
+              <label className="text-sm text-white/40 mb-1 block">Teléfono</label>
+              <p className="text-white font-medium">{contacto.phone || "—"}</p>
+            </div>
+            <div>
+              <label className="text-sm text-white/40 mb-1 block">Servicio</label>
+              <p className="text-white font-medium">{contacto.servicio}</p>
+            </div>
+            <div className="md:col-span-2">
+              <label className="text-sm text-white/40 mb-1 block">Mensaje</label>
+              <p className="text-white/80 bg-white/5 p-3 rounded-lg border border-white/10">
+                {contacto.mensaje || "Sin mensaje"}
+              </p>
+            </div>
+            <div>
+              <label className="text-sm text-white/40 mb-1 block">Fecha</label>
+              <p className="text-white font-medium">{formatDate(contacto.created_at)}</p>
+            </div>
+            <div>
+              <label className="text-sm text-white/40 mb-1 block">Estado</label>
+              <div className="flex items-center gap-2">
+                <StatusBadge estado={contacto.estado} />
+                <span className="text-xs text-white/40">({selectedEstado})</span>
+              </div>
             </div>
           </div>
-          <button onClick={onClose} className="text-white/40 hover:text-white transition-colors">
-            <X size={20} />
-          </button>
-        </div>
 
-        <div className="p-6 space-y-4">
-          <a
-            href={`mailto:${contacto.email}`}
-            className="flex items-center gap-3 text-white/60 text-sm hover:text-[#00E5FF] transition-colors"
-          >
-            <Mail size={16} className="text-[#00E5FF]" />
-            {contacto.email}
-          </a>
-          {contacto.telefono && (
-            <a
-              href={`tel:${contacto.telefono}`}
-              className="flex items-center gap-3 text-white/60 text-sm hover:text-[#00E5FF] transition-colors"
+          <div className="border-t border-white/10 pt-4">
+            <label className="text-sm text-white/40 mb-2 block">Cambiar Estado</label>
+            <Select value={selectedEstado} onValueChange={handleEstadoChange} disabled={updating}>
+              <SelectTrigger className="w-full bg-white/5 border-white/10 text-white">
+                <SelectValue placeholder="Seleccionar estado" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#1E293B] border-white/10">
+                {estadoOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value} className="text-white">
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex justify-between items-center pt-4 border-t border-white/10">
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={updating}
+              className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20"
             >
-              <Phone size={16} className="text-[#00E5FF]" />
-              {contacto.telefono}
-            </a>
-          )}
-          <div className="flex items-center gap-3 text-white/60 text-sm">
-            <Calendar size={16} className="text-[#00E5FF]" />
-            {new Date(contacto.created_at).toLocaleString("es-VE")}
-          </div>
-
-          <div>
-            <p className="text-white/40 text-xs uppercase tracking-wider mb-1">Servicio</p>
-            <p className="text-white text-sm">{contacto.servicio}</p>
-          </div>
-
-          <div>
-            <p className="text-white/40 text-xs uppercase tracking-wider mb-1">Mensaje</p>
-            <p className="text-white/70 text-sm leading-relaxed whitespace-pre-wrap">
-              {contacto.mensaje}
-            </p>
-          </div>
-
-          <div className="pt-2">
-            <p className="text-white/40 text-xs uppercase tracking-wider mb-2">Cambiar estado</p>
-            <div className="flex flex-wrap gap-2">
-              {estados.map((e) => (
-                <button
-                  key={e.key}
-                  onClick={() => onUpdateEstado(contacto.id, e.key)}
-                  disabled={contacto.estado === e.key}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                    contacto.estado === e.key
-                      ? "bg-[#00E5FF] text-[#0A1628] border-[#00E5FF]"
-                      : "bg-white/5 text-white/60 border-white/10 hover:border-[#00E5FF]/30"
-                  }`}
-                >
-                  {e.label}
-                </button>
-              ))}
-            </div>
+              {updating ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
+              Eliminar Solicitud
+            </Button>
+            <Button onClick={onClose} variant="outline" className="border-white/10 text-white hover:bg-white/5">
+              Cerrar
+            </Button>
           </div>
         </div>
-
-        <div className="p-6 border-t border-white/10">
-          {confirmDelete ? (
-            <div className="flex items-center gap-3">
-              <span className="text-white/60 text-sm">¿Confirmar eliminación?</span>
-              <button
-                onClick={() => onDelete(contacto.id)}
-                className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 text-xs font-medium hover:bg-red-500/30 transition-colors"
-              >
-                Sí, eliminar
-              </button>
-              <button
-                onClick={() => setConfirmDelete(false)}
-                className="text-white/40 text-xs hover:text-white transition-colors"
-              >
-                Cancelar
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setConfirmDelete(true)}
-              className="flex items-center gap-2 text-red-400/70 hover:text-red-400 text-sm transition-colors"
-            >
-              <Trash2 size={16} />
-              Eliminar solicitud
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

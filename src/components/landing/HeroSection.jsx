@@ -8,6 +8,16 @@ const HERO_BG = "https://media.base44.com/images/public/6a3931edbedfeb772a963c37
 export default function HeroSection() {
   const { t } = useLang();
 
+  /** @param {string} id */
+  const handleNavigate = (id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+    } else {
+      window.location.href = `/#/${id}`;
+    }
+  };
+
   return (
     <section id="inicio" className="relative min-h-screen flex items-center overflow-hidden">
       <div className="absolute inset-0">
@@ -59,19 +69,19 @@ export default function HeroSection() {
             transition={{ duration: 0.7, delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-4 mb-16"
           >
-            <a
-              href="#contacto"
+            <button
+              onClick={() => handleNavigate("contacto")}
               className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-[#00E5FF] text-[#0A1628] font-bold text-base rounded-xl hover:bg-[#00B8D4] transition-all duration-300 hover:shadow-xl hover:shadow-[#00E5FF]/25 group"
             >
               {t.hero.cta}
               <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-            </a>
-            <a
-              href="#servicios"
+            </button>
+            <button
+              onClick={() => handleNavigate("servicios")}
               className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 text-white font-semibold text-base rounded-xl border border-white/10 hover:border-[#00E5FF]/30 hover:bg-white/10 transition-all duration-300"
             >
               {t.hero.ctaSecondary}
-            </a>
+            </button>
           </motion.div>
 
           <motion.div

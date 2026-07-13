@@ -3,17 +3,24 @@ import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLang } from "@/lib/LanguageContext";
 
+const scrollToSection = (id) => {
+  const el = document.getElementById(id);
+  if (el) {
+    el.scrollIntoView({ behavior: "smooth" });
+  }
+};
+
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const { lang, setLang, t } = useLang();
 
   const navLinks = [
-    { label: t.nav.inicio, href: "#inicio" },
-    { label: t.nav.servicios, href: "#servicios" },
-    { label: t.nav.nosotros, href: "#nosotros" },
-    { label: t.nav.proceso, href: "#proceso" },
-    { label: t.nav.contacto, href: "#contacto" },
+    { label: t.nav.inicio, id: "inicio" },
+    { label: t.nav.servicios, id: "servicios" },
+    { label: t.nav.nosotros, id: "nosotros" },
+    { label: t.nav.proceso, id: "proceso" },
+    { label: t.nav.contacto, id: "contacto" },
   ];
 
   useEffect(() => {
@@ -31,22 +38,25 @@ export default function Navbar() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 lg:px-8 flex items-center justify-between h-20">
-        <a href="#inicio" className="flex items-center gap-3 group">
+        <button onClick={() => scrollToSection("inicio")} className="flex items-center gap-3 group">
           <img src="https://media.base44.com/images/public/6a3931edbedfeb772a963c37/0630e86cd_Pulsosmbolopararedessociales-Photoroom.png" alt="PULSO IT Logo" className="w-10 h-10 object-contain" />
           <span className="font-heading font-bold text-lg text-white tracking-tight hidden sm:block">
             PULSO<span className="text-[#00E5FF] ml-1">IT</span>
           </span>
-        </a>
+        </button>
 
         <div className="hidden lg:flex items-center gap-1">
           {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
+            <button
+              key={link.id}
+              onClick={() => {
+                scrollToSection(link.id);
+                setMenuOpen(false);
+              }}
               className="px-4 py-2 text-sm font-medium text-white/70 hover:text-[#00E5FF] transition-colors duration-300 rounded-lg hover:bg-white/5"
             >
               {link.label}
-            </a>
+            </button>
           ))}
         </div>
 
@@ -78,14 +88,16 @@ export default function Navbar() {
           >
             <div className="px-6 py-6 flex flex-col gap-2">
               {navLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMenuOpen(false)}
-                  className="px-4 py-3 text-white/80 hover:text-[#00E5FF] hover:bg-white/5 rounded-lg transition-colors font-medium"
+                <button
+                  key={link.id}
+                  onClick={() => {
+                    scrollToSection(link.id);
+                    setMenuOpen(false);
+                  }}
+                  className="px-4 py-3 text-white/80 hover:text-[#00E5FF] hover:bg-white/5 rounded-lg transition-colors font-medium text-left"
                 >
                   {link.label}
-                </a>
+                </button>
               ))}
             </div>
           </motion.div>
